@@ -1,0 +1,86 @@
+MODULE main
+
+VAR
+	arr : array 0 .. 4 of {1,2,3,4,5};
+	i : 0 .. 4;
+	j : 0 .. 3;
+	aux : {1,2,3,4,5};
+	state : {b1,b3,b4,b5,b6,b7};
+DEFINE
+	ord := arr[0] <= arr[1] & arr[1] <= arr[2] & arr[2] <= arr[3] & arr[3] <= arr[4];
+
+ASSIGN
+	init(state) := b1;
+	init(i) := 0;
+	init(j) := 0;
+	init(aux) := arr[0];
+	init(arr[0]) := 5;
+	init(arr[1]) := 3;
+	init(arr[2]) := 4;
+	init(arr[3]) := 2;
+	init(arr[4]) := 1;
+	next(state) :=
+				case
+					state = b1 & i < 5 : b3;
+					state = b3 & arr[j] > arr[j + 1] : b4;
+					state = b3 & arr[j] <= arr[j + 1] : b5;
+					state = b3 & j >= 5 - i - 1: b6;
+					state = b4 : b5;
+					state = b5 & j + 1 < 5 - i - 1: b3;
+					state = b5 & j + 1 >= 5 - i - 1: b6;
+					state = b6 & i + 1 < 5 : b1;
+					state = b6 & i + 1 >= 5 : b7;
+					TRUE : state;
+				esac;
+	next(aux) :=
+				case
+					state = b3 : arr[j];
+					TRUE : aux;
+				esac;
+	next(i) :=
+				case
+					state = b6 & i < 4: i + 1;
+					TRUE : i;
+				esac;
+	next(j) :=
+				case
+					state = b1 : 0;
+					state = b5 & j < 3: j + 1;
+					TRUE : j;
+				esac;
+	next(arr[0]) :=
+				case
+					state = b4 & j = 0 : arr[j+1];
+					TRUE : arr[0];
+				esac;
+	next(arr[1]) :=
+				case
+					state = b4 & j = 1 : arr[j+1];
+					state = b4 & j = 0  : aux;
+					TRUE : arr[1];
+				esac;
+	next(arr[2]) :=
+				case
+					state = b4 & j = 2 : arr[j+1];
+					state = b4 & j = 1  : aux;
+					TRUE : arr[2];
+				esac;
+	next(arr[3]) :=
+				case
+					state = b4 & j = 3 : arr[j+1];
+					state = b4 & j = 2  : aux;
+					TRUE : arr[3];
+				esac;
+	next(arr[4]) :=
+				case
+					state = b4 & j = 3  : aux;
+					TRUE : arr[4];
+				esac;
+LTLSPEC
+	F state = b7
+LTLSPEC
+	G (ord -> F state = b7)
+LTLSPEC
+	F ord
+LTLSPEC
+	ord = FALSE U state != b7
